@@ -7,7 +7,7 @@ public class Sim: MonoBehaviour
     struct Agent
     {
         public Vector2 position;
-        public Vector2 velocity;
+        public float angle;
     }
 
     public ComputeShader computeShader;
@@ -30,7 +30,7 @@ public class Sim: MonoBehaviour
         createBuffer();
         InitAgents();
         setupShader();
-        Application.targetFrameRate = 60;
+        Application.targetFrameRate = 140;
     }
 
 
@@ -85,7 +85,7 @@ public class Sim: MonoBehaviour
         for (int i = 0; i < agentCount; i++)
         {
             agents[i].position = new Vector2(Random.value, Random.value); // [0,1]
-            agents[i].velocity = Random.insideUnitCircle * 0.01f;
+            agents[i].angle = Random.Range(0f, Mathf.PI * 2f);
         }
         computeBuffer.SetData(agents);
     }
@@ -94,7 +94,7 @@ public class Sim: MonoBehaviour
 
     void createBuffer()
     {
-        computeBuffer = new ComputeBuffer(agentCount, sizeof(float) * 4);
+        computeBuffer = new ComputeBuffer(agentCount, sizeof(float) * 3);
         
     }
 

@@ -1,12 +1,12 @@
 // Each #kernel tells which function to compile; you can have many kernels
 #pragma kernel CSMain
-
+#define PI 3.14159265
 // Create a RenderTexture with enableRandomWrite flag and set it
 // with cs.SetTexture
 struct Agent
 {
     float2 position;
-    float2 velocity;
+    float angle;
 };
 
 
@@ -26,32 +26,22 @@ void CSMain(uint3 id : SV_DispatchThreadID)
         return;
 
     Agent agent = agents[index];
+    float2 dir = float2(cos(agent.angle), sin(agent.angle));
 
     // Apply motion with speed factor
-    agent.position += agent.velocity * deltaTime * speed;
+    agent.position += dir * deltaTime * speed;
 
-    // Bounce on X edges
-    if (agent.position.x < 0.0f)
+    // Bounce on edges
+    if (agent.position.x < 0.0f || agent.position.x > 1.0f)
     {
-        agent.position.x = 0.0f;
-        agent.velocity.x *= -1.0f;
-    }
-    else if (agent.position.x > 1.0f)
-    {
-        agent.position.x = 1.0f;
-        agent.velocity.x *= -1.0f;
+        agent.angle = PI - agent.angle;
+        agent.position.x = clamp(agent.position.x, 0.0f, 1.0f);
     }
 
-    // Bounce on Y edges
-    if (agent.position.y < 0.0f)
+    if (agent.position.y < 0.0f || agent.position.y > 1.0f)
     {
-        agent.position.y = 0.0f;
-        agent.velocity.y *= -1.0f;
-    }
-    else if (agent.position.y > 1.0f)
-    {
-        agent.position.y = 1.0f;
-        agent.velocity.y *= -1.0f;
+        agent.angle = -agent.angle;
+        agent.position.y = clamp(agent.position.y, 0.0f, 1.0f);
     }
 
     agents[index] = agent;
