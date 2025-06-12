@@ -1,0 +1,42 @@
+// Each #kernel tells which function to compile; you can have many kernels
+#pragma kernel CSDiffuse
+
+// Create a RenderTexture with enableRandomWrite flag and set it
+// with cs.SetTexture
+RWTexture2D<float4> Result;
+RWTexture2D<float4> Source;
+float damping;
+int width;
+int height;
+
+
+
+[numthreads(8, 8, 1)]
+void CSDiffuse(uint3 id : SV_DispatchThreadID)
+{
+    // TODO: insert actual code here!
+    int2 coord = int2(id.x, id.y);
+    if (coord.x >= width || coord.y >= height)
+        return;
+    
+    float sum = 0.0;
+    int count = 0;
+    
+    for (int y = -1; y <= 1; y++)
+    {
+        for (int x = -1; x <= 1; x++)
+        {
+            int2 neighbor = coord + int2(x, y);
+            if (neighbor.x >= 0 && neighbor.y >= 0 && neighbor.x < width && neighbor.y < height)
+            {
+                sum += Source[neighbor].r;
+                count++;
+            }
+        }
+    }
+    
+    float mean = sum / count;
+    float damped = mean * (1.0 - damping);
+    
+    Result[coord] = damped;
+    }

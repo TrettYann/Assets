@@ -11,22 +11,26 @@ public class Sim: MonoBehaviour
     }
 
     public ComputeShader computeShader;
-    public ComputeShader decayShader;
+    public ComputeShader diffuseShader;
     public RenderTexture renderTexture;
+    public RenderTexture tempRT;
     [Range(0, 1000)] public int agentCount;
     public int width = 256;
     public int height = 256;
     [Range(0f, 10f)] public float speed = 0.2f;
-    [Range(-1f, 1f)] public float decayFactor;
+    [Range(-1f, 1f)] public float dampingFactor;
+    public int diffusionFrequency = 1;
 
     ComputeBuffer computeBuffer;
     int mainKernel;
-    int decayKernel;
+    int diffuseKernel;
+    private int frameCount = 0;
 
     // Start is called once before the first execution of Update after the MonoBehaviour is created
     void Start()
     {
-        createTexture();
+        renderTexture = createTexture();
+        tempRT = createTexture();
         createBuffer();
         InitAgents();
         setupShader();
@@ -49,15 +53,17 @@ public class Sim: MonoBehaviour
 
         handleShader();
         Graphics.Blit(renderTexture, dest);
+        frameCount++;
 
     }
 
-    void createTexture()
+    RenderTexture createTexture()
     {
-        renderTexture = new RenderTexture(width, height, 24);
-        renderTexture.enableRandomWrite = true;
-        renderTexture.filterMode = FilterMode.Point;
-        renderTexture.Create();
+        RenderTexture rt = new RenderTexture(width, height, 24);
+        rt.enableRandomWrite = true;
+        rt.filterMode = FilterMode.Point;
+        rt.Create();
+        return rt;
     }
 
     void handleShader()
@@ -71,10 +77,20 @@ public class Sim: MonoBehaviour
         computeShader.SetBuffer(mainKernel, "agents", computeBuffer);
         computeShader.Dispatch(mainKernel, groups, 1, 1);
 
-        // Decay Shader
-        decayShader.SetFloat("decayFactor", decayFactor);
-        decayShader.SetTexture(decayKernel, "Result", renderTexture);
-        decayShader.Dispatch(mainKernel, width / 8, height / 8, 1);
+
+        if (frameCount % diffusionFrequency == 0)
+        {
+            diffuseShader.SetTexture(diffuseKernel, "Source", renderTexture);
+            diffuseShader.SetTexture(diffuseKernel, "Result", tempRT);
+            diffuseShader.SetFloat("damping", dampingFactor);
+
+            diffuseShader.Dispatch(diffuseKernel, width / 8, height / 8, 1);
+
+            // Swap textures
+            var swap = renderTexture;
+            renderTexture = tempRT;
+            tempRT = swap;
+        }
     }
 
 
@@ -101,12 +117,18 @@ public class Sim: MonoBehaviour
     void setupShader()
     {
         mainKernel = computeShader.FindKernel("CSMain");
-        decayKernel = decayShader.FindKernel("CSDecay");
+        diffuseKernel = diffuseShader.FindKernel("CSDiffuse");
         computeShader.SetBuffer(mainKernel, "agents", computeBuffer);
         computeShader.SetTexture(mainKernel, "Result", renderTexture);
         computeShader.SetInt("width", width);
         computeShader.SetInt("height", height);
-        decayShader.SetTexture(decayKernel, "Result", renderTexture);
+
+        diffuseShader.SetInt("width", width);
+        diffuseShader.SetInt("height", height);
+        
+
+        diffuseShader.SetTexture(diffuseKernel, "Source", renderTexture);
+        diffuseShader.SetTexture(diffuseKernel, "Result", tempRT);
 
     }
 
