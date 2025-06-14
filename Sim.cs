@@ -20,15 +20,22 @@ public class Sim: MonoBehaviour
     [Range(0f, 10f)] public float speed = 0.2f;
     [Range(-1f, 1f)] public float dampingFactor;
     public int diffusionFrequency = 1;
+    [Range(0f, 10f)] public float sensorAngleSpacing = 0.5f;
+    [Range(0f, 10f)] public float sensorDistance = 0.02f;
+    [Range(0f, 10f)] public float rotationSpeed = 1f;
+
 
     ComputeBuffer computeBuffer;
     int mainKernel;
     int diffuseKernel;
     private int frameCount = 0;
-
+    int threadsPerGroup = 256;
+    int groups;
     // Start is called once before the first execution of Update after the MonoBehaviour is created
     void Start()
     {
+        
+        groups = Mathf.CeilToInt(agentCount / (float)threadsPerGroup);
         renderTexture = createTexture();
         tempRT = createTexture();
         createBuffer();
@@ -69,13 +76,17 @@ public class Sim: MonoBehaviour
     void handleShader()
     {
         // Main Shader
-        int threadsPerGroup = 256;
-        int groups = Mathf.CeilToInt(agentCount / (float)threadsPerGroup);
         computeShader.SetTexture(mainKernel, "Result", renderTexture);
+        computeShader.SetTexture(mainKernel, "Source", tempRT);
         computeShader.SetFloat("deltaTime", Time.deltaTime);
         computeShader.SetFloat("speed", speed);
         computeShader.SetBuffer(mainKernel, "agents", computeBuffer);
         computeShader.Dispatch(mainKernel, groups, 1, 1);
+
+        //Swap textures
+        //var swap1 = renderTexture;
+        //renderTexture = tempRT;
+        //tempRT = swap1;
 
 
         if (frameCount % diffusionFrequency == 0)
@@ -87,9 +98,9 @@ public class Sim: MonoBehaviour
             diffuseShader.Dispatch(diffuseKernel, width / 8, height / 8, 1);
 
             // Swap textures
-            var swap = renderTexture;
+            var swap2 = renderTexture;
             renderTexture = tempRT;
-            tempRT = swap;
+            tempRT = swap2;
         }
     }
 
@@ -116,12 +127,16 @@ public class Sim: MonoBehaviour
 
     void setupShader()
     {
+        // Main Shader
         mainKernel = computeShader.FindKernel("CSMain");
         diffuseKernel = diffuseShader.FindKernel("CSDiffuse");
         computeShader.SetBuffer(mainKernel, "agents", computeBuffer);
         computeShader.SetTexture(mainKernel, "Result", renderTexture);
+        computeShader.SetTexture(mainKernel, "Source", tempRT);
         computeShader.SetInt("width", width);
         computeShader.SetInt("height", height);
+
+        // Diffuse Shader
 
         diffuseShader.SetInt("width", width);
         diffuseShader.SetInt("height", height);
