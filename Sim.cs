@@ -10,7 +10,7 @@ public class Sim: MonoBehaviour
         public float angle;
     }
 
-    public ComputeShader computeShader;
+    public ComputeShader agentShader;
     public ComputeShader diffuseShader;
     public RenderTexture renderTexture;
     public RenderTexture tempRT;
@@ -19,10 +19,12 @@ public class Sim: MonoBehaviour
     public int height = 256;
     [Range(0f, 10f)] public float speed = 0.2f;
     [Range(-1f, 1f)] public float dampingFactor;
+    [Range(-5f, 5f)] public float rotationAngle;
+    [Range(0f, 100f)] public float SensorOffset;
     public int diffusionFrequency = 1;
 
     ComputeBuffer computeBuffer;
-    int mainKernel;
+    int agentKernel;
     int diffuseKernel;
     private int frameCount = 0;
 
@@ -52,6 +54,7 @@ public class Sim: MonoBehaviour
         }
 
         handleShader();
+        //tempRT = renderTexture; // Refresh TempRT
         Graphics.Blit(renderTexture, dest);
         frameCount++;
 
@@ -59,7 +62,7 @@ public class Sim: MonoBehaviour
 
     RenderTexture createTexture()
     {
-        RenderTexture rt = new RenderTexture(width, height, 24);
+        RenderTexture rt = new RenderTexture(width, height, 0, RenderTextureFormat.ARGBFloat);
         rt.enableRandomWrite = true;
         rt.filterMode = FilterMode.Point;
         rt.Create();
@@ -68,16 +71,19 @@ public class Sim: MonoBehaviour
 
     void handleShader()
     {
-        // Main Shader
+        // Agent Shader
         int threadsPerGroup = 256;
         int groups = Mathf.CeilToInt(agentCount / (float)threadsPerGroup);
-        computeShader.SetTexture(mainKernel, "Result", renderTexture);
-        computeShader.SetFloat("deltaTime", Time.deltaTime);
-        computeShader.SetFloat("speed", speed);
-        computeShader.SetBuffer(mainKernel, "agents", computeBuffer);
-        computeShader.Dispatch(mainKernel, groups, 1, 1);
+        agentShader.SetTexture(agentKernel, "Result", renderTexture);
+        agentShader.SetTexture(agentKernel, "Source", tempRT);
+        agentShader.SetFloat("deltaTime", Time.deltaTime);
+        agentShader.SetFloat("speed", speed);
+        agentShader.SetFloat("SensorOffset", SensorOffset);
+        agentShader.SetFloat("rotationAngle", rotationAngle);
+        agentShader.SetBuffer(agentKernel, "agents", computeBuffer);
+        agentShader.Dispatch(agentKernel, groups, 1, 1);
 
-
+        //Diffuse Shader
         if (frameCount % diffusionFrequency == 0)
         {
             diffuseShader.SetTexture(diffuseKernel, "Source", renderTexture);
@@ -116,17 +122,22 @@ public class Sim: MonoBehaviour
 
     void setupShader()
     {
-        mainKernel = computeShader.FindKernel("CSMain");
+        // Agent Shader
+        agentKernel = agentShader.FindKernel("CSAgent");
+
+        agentShader.SetInt("width", width);
+        agentShader.SetInt("height", height);
+
+        agentShader.SetBuffer(agentKernel, "agents", computeBuffer);
+        agentShader.SetTexture(agentKernel, "Result", renderTexture);
+        agentShader.SetTexture(agentKernel, "Source", tempRT);
+
+        // DIffuse Shader
         diffuseKernel = diffuseShader.FindKernel("CSDiffuse");
-        computeShader.SetBuffer(mainKernel, "agents", computeBuffer);
-        computeShader.SetTexture(mainKernel, "Result", renderTexture);
-        computeShader.SetInt("width", width);
-        computeShader.SetInt("height", height);
 
         diffuseShader.SetInt("width", width);
         diffuseShader.SetInt("height", height);
-        
-
+ 
         diffuseShader.SetTexture(diffuseKernel, "Source", renderTexture);
         diffuseShader.SetTexture(diffuseKernel, "Result", tempRT);
 
