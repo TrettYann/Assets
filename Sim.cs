@@ -20,7 +20,7 @@ public class Sim: MonoBehaviour
     [Range(0f, 10f)] public float speed = 0.2f;
     [Range(-1f, 1f)] public float dampingFactor;
     [Range(-5f, 5f)] public float rotationAngle;
-    [Range(0f, 100f)] public float SensorOffset;
+    [Range(1, 15)] public int SensorOffset;
     public int diffusionFrequency = 1;
 
     ComputeBuffer computeBuffer;
@@ -78,7 +78,7 @@ public class Sim: MonoBehaviour
         agentShader.SetTexture(agentKernel, "Source", tempRT);
         agentShader.SetFloat("deltaTime", Time.deltaTime);
         agentShader.SetFloat("speed", speed);
-        agentShader.SetFloat("SensorOffset", SensorOffset);
+        agentShader.SetInt("SensorOffset", SensorOffset);
         agentShader.SetFloat("rotationAngle", rotationAngle);
         agentShader.SetBuffer(agentKernel, "agents", computeBuffer);
         agentShader.Dispatch(agentKernel, groups, 1, 1);

@@ -1,0 +1,46 @@
+// Each #kernel tells which function to compile; you can have many kernels
+#pragma kernel CSMain
+
+// Create a RenderTexture with enableRandomWrite flag and set it
+// with cs.SetTexture
+RWTexture2D<float4> Result;
+Texture2D<float4> Source;
+float angle;
+int offset;
+
+float Sense(int2 coord)
+{
+    float brightness = Source.Load(int3(coord, 0));
+    return brightness;
+}
+
+[numthreads(8,8,1)]
+void CSMain (uint3 id : SV_DispatchThreadID)
+{
+    Result[id.xy] = float4(0, 0, 0, 0);
+    int2 coord = (128,128);
+    float PI = 3.14159f;
+    
+    int2 FrontRightCoordinate = int2(coord.x + offset * cos(angle - PI / 4), coord.y + offset * sin(angle - PI / 4));
+    int2 FrontLeftCoordinate = int2(coord.x + offset * cos(angle + PI / 4), coord.y + offset * sin(angle + PI / 4));
+    int2 FrontCoordinate = int2(coord.x + offset * cos(angle), coord.y + offset * sin(angle));
+
+    
+    if (id.x == coord.x && id.y == coord.y )
+    {
+        Result[id.xy] = float4(1, 1, 1, 1);
+    }
+    if (id.x == FrontLeftCoordinate.x && id.y == FrontLeftCoordinate.y)
+    {
+        Result[id.xy] = float4(255, 0, 0, 255);
+    }
+    if (id.x == FrontRightCoordinate.x && id.y == FrontRightCoordinate.y)
+    {
+        Result[id.xy] = float4(0, 255, 0, 255);
+    }
+    if (id.x == FrontCoordinate.x && id.y == FrontCoordinate.y)
+    {
+        Result[id.xy] = float4(0, 0, 255, 255);
+    }
+    
+}

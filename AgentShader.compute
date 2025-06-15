@@ -17,7 +17,7 @@ int width;
 int height;
 float deltaTime;
 float speed;
-float SensorOffset;
+int SensorOffset;
 float rotationAngle;
 
 float Sense(int2 coord)
@@ -31,19 +31,22 @@ void CSAgent(uint3 id : SV_DispatchThreadID)
 {
     
     uint index = id.x;
+
     if (index >= agents.Length)
         return;
 
     Agent agent = agents[index];
-    
+
     // Convert normalized pos to pixel coords
     int2 coord = int2(agent.position.x * width, agent.position.y * height);
+    int xcoord = int(agent.position.x * width);
+    int ycoord = int(agent.position.y * height);
     coord = clamp(coord, int2(0, 0), int2(width - 1, height - 1));
     
 
-    int2 FrontLeftCoordinate = int2(agent.position.x + SensorOffset * cos(agent.angle - PI / 4), agent.position.y + SensorOffset * sin(agent.angle - PI / 4));
-    int2 FrontRightCoordinate = int2(agent.position.x + SensorOffset * cos(agent.angle + PI / 4), agent.position.y + SensorOffset * sin(agent.angle + PI / 4));
-    int2 FrontCoordinate = int2(agent.position.x + SensorOffset * cos(agent.angle), agent.position.y + SensorOffset * sin(agent.angle));
+    int2 FrontRightCoordinate = int2(xcoord + SensorOffset * cos(rotationAngle - PI / 4), ycoord + SensorOffset * sin(rotationAngle - PI / 4));
+    int2 FrontLeftCoordinate = int2(xcoord + SensorOffset * cos(rotationAngle + PI / 4), ycoord + SensorOffset * sin(rotationAngle + PI / 4));
+    int2 FrontCoordinate = int2(xcoord + SensorOffset * cos(rotationAngle), ycoord + SensorOffset * sin(rotationAngle));
     
     float FL = Sense(FrontLeftCoordinate);
     float FR = Sense(FrontRightCoordinate);
@@ -92,7 +95,20 @@ void CSAgent(uint3 id : SV_DispatchThreadID)
         agent.position.y = clamp(agent.position.y, 0.0f, 1.0f);
     }
 
-    agents[index] = agent;
+    
+    //if (id.x == FrontLeftCoordinate.x && id.y == FrontLeftCoordinate.y)
+    //{
+    //    Result[id.xy] = float4(255, 0, 0, 255);
+    //}
+    //if (id.x == FrontRightCoordinate.x && id.y == FrontRightCoordinate.y)
+    //{
+    //    Result[id.xy] = float4(0, 255, 0, 255);
+    //}
+    //if (id.x == FrontCoordinate.x && id.y == FrontCoordinate.y)
+    //{
+    //    Result[id.xy] = float4(0, 0, 255, 255);
+    //}
+    //agents[index] = agent;
 
 
 
