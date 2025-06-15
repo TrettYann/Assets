@@ -14,13 +14,13 @@ public class Sim: MonoBehaviour
     public ComputeShader diffuseShader;
     public RenderTexture renderTexture;
     public RenderTexture tempRT;
-    [Range(0, 10000)] public int agentCount;
+    [Range(0, 1000000)] public int agentCount;
     public int width = 256;
     public int height = 256;
     [Range(0f, 10f)] public float speed = 0.2f;
     [Range(-1f, 1f)] public float dampingFactor;
-    [Range(-5f, 5f)] public float rotationAngle;
-    [Range(1, 15)] public int SensorOffset;
+    [Range(-100f, 100f)] public float rotationAngle;
+    [Range(1, 50)] public int SensorOffset;
     public int diffusionFrequency = 1;
 
     ComputeBuffer computeBuffer;

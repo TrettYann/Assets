@@ -82,31 +82,24 @@ void CSAgent(uint3 id : SV_DispatchThreadID)
     agent.position += dir * deltaTime * speed;
 
     // Bounce on edges
-    if (agent.position.x < 0.0f || agent.position.x > 1.0f)
-    {
-        agent.angle = PI - agent.angle;
-        agent.position.x = clamp(agent.position.x, 0.0f, 1.0f);
-    }
+if (agent.position.x < 0.0f)
+{
+    agent.position.x = 1.0f; // Move to the opposite side
+}
+else if (agent.position.x > 1.0f)
+{
+    agent.position.x = 0.0f; // Move to the opposite side
+}
 
-    if (agent.position.y < 0.0f || agent.position.y > 1.0f)
-    {
-        agent.angle = -agent.angle;
-        agent.position.y = clamp(agent.position.y, 0.0f, 1.0f);
-    }
+if (agent.position.y < 0.0f)
+{
+    agent.position.y = 1.0f; // Move to the opposite side
+}
+else if (agent.position.y > 1.0f)
+{
+    agent.position.y = 0.0f; // Move to the opposite side
+}
 
-    
-    //if (id.x == FrontLeftCoordinate.x && id.y == FrontLeftCoordinate.y)
-    //{
-    //    Result[id.xy] = float4(255, 0, 0, 255);
-    //}
-    //if (id.x == FrontRightCoordinate.x && id.y == FrontRightCoordinate.y)
-    //{
-    //    Result[id.xy] = float4(0, 255, 0, 255);
-    //}
-    //if (id.x == FrontCoordinate.x && id.y == FrontCoordinate.y)
-    //{
-    //    Result[id.xy] = float4(0, 0, 255, 255);
-    //}
     agents[index] = agent;
 
 

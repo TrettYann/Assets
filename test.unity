@@ -146,7 +146,7 @@ MonoBehaviour:
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 34278327}
-  m_Enabled: 0
+  m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: d2f7817aeba552745a0b5b62480eed5a, type: 3}
   m_Name: 
@@ -155,14 +155,14 @@ MonoBehaviour:
   diffuseShader: {fileID: 7200000, guid: 27dab39a515147b46bc9f3bb7cbd7f2f, type: 3}
   renderTexture: {fileID: 0}
   tempRT: {fileID: 0}
-  agentCount: 1
+  agentCount: 10000
   width: 256
   height: 256
-  speed: 0.3
-  dampingFactor: 0.04
-  rotationAngle: 1.77
+  speed: 0.05
+  dampingFactor: 0.2
+  rotationAngle: 0.66
   SensorOffset: 9
-  diffusionFrequency: 1
+  diffusionFrequency: 9
 --- !u!81 &34278329
 AudioListener:
   m_ObjectHideFlags: 0
@@ -244,7 +244,7 @@ MonoBehaviour:
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 34278327}
-  m_Enabled: 1
+  m_Enabled: 0
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 7283c0574db89574281db651485a58c7, type: 3}
   m_Name: 
