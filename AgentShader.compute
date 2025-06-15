@@ -44,14 +44,13 @@ void CSAgent(uint3 id : SV_DispatchThreadID)
     coord = clamp(coord, int2(0, 0), int2(width - 1, height - 1));
     
 
-    int2 FrontRightCoordinate = int2(xcoord + SensorOffset * cos(rotationAngle - PI / 4), ycoord + SensorOffset * sin(rotationAngle - PI / 4));
-    int2 FrontLeftCoordinate = int2(xcoord + SensorOffset * cos(rotationAngle + PI / 4), ycoord + SensorOffset * sin(rotationAngle + PI / 4));
-    int2 FrontCoordinate = int2(xcoord + SensorOffset * cos(rotationAngle), ycoord + SensorOffset * sin(rotationAngle));
+    int2 FrontRightCoordinate = int2(xcoord + SensorOffset * cos(agent.angle - PI / 8), ycoord + SensorOffset * sin(agent.angle - PI / 8));
+    int2 FrontLeftCoordinate = int2(xcoord + SensorOffset * cos(agent.angle + PI / 8), ycoord + SensorOffset * sin(agent.angle + PI / 8));
+    int2 FrontCoordinate = int2(xcoord + SensorOffset * cos(agent.angle), ycoord + SensorOffset * sin(agent.angle));
     
     float FL = Sense(FrontLeftCoordinate);
     float FR = Sense(FrontRightCoordinate);
     float F = Sense(FrontCoordinate);
-    float angleStep = radians(rotationAngle) * deltaTime;
     if (F > FL && F > FR)
     {
         
@@ -60,20 +59,20 @@ void CSAgent(uint3 id : SV_DispatchThreadID)
     {
         if (FR > FL)
         {
-            agent.angle += rotationAngle*deltaTime;
+            agent.angle -= rotationAngle*deltaTime;
         }
         else
         {
-            agent.angle -= rotationAngle * deltaTime;
+            agent.angle += rotationAngle * deltaTime;
         }
 
     }else if (FR < FL)
     {
-        agent.angle -= rotationAngle * deltaTime;
+        agent.angle += rotationAngle * deltaTime;
     }
     else if (FR > FL)
     {
-        agent.angle += rotationAngle * deltaTime;
+        agent.angle -= rotationAngle * deltaTime;
     }
     
     float2 dir = float2(cos(agent.angle), sin(agent.angle));
@@ -108,7 +107,7 @@ void CSAgent(uint3 id : SV_DispatchThreadID)
     //{
     //    Result[id.xy] = float4(0, 0, 255, 255);
     //}
-    //agents[index] = agent;
+    agents[index] = agent;
 
 
 

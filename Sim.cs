@@ -14,7 +14,7 @@ public class Sim: MonoBehaviour
     public ComputeShader diffuseShader;
     public RenderTexture renderTexture;
     public RenderTexture tempRT;
-    [Range(0, 1000)] public int agentCount;
+    [Range(0, 10000)] public int agentCount;
     public int width = 256;
     public int height = 256;
     [Range(0f, 10f)] public float speed = 0.2f;
@@ -106,7 +106,7 @@ public class Sim: MonoBehaviour
         Agent[] agents = new Agent[agentCount];
         for (int i = 0; i < agentCount; i++)
         {
-            agents[i].position = new Vector2(Random.value, Random.value); // [0,1]
+            agents[i].position = new Vector2(Random.value, Random.value); // new Vector2(0.5f,0.5f); //[0,1]
             agents[i].angle = Random.Range(0f, Mathf.PI * 2f);
         }
         computeBuffer.SetData(agents);

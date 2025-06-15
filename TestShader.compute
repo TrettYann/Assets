@@ -3,6 +3,15 @@
 
 // Create a RenderTexture with enableRandomWrite flag and set it
 // with cs.SetTexture
+
+struct Agent
+{
+    float2 position;
+    float angle;
+};
+
+
+RWStructuredBuffer<Agent> agents;
 RWTexture2D<float4> Result;
 Texture2D<float4> Source;
 float angle;
@@ -17,19 +26,26 @@ float Sense(int2 coord)
 [numthreads(8,8,1)]
 void CSMain (uint3 id : SV_DispatchThreadID)
 {
+    
     Result[id.xy] = float4(0, 0, 0, 0);
-    int2 coord = (128,128);
+    
+    uint index = id.x;
+
+    if (index >= agents.Length)
+        return;
+
+    Agent agent = agents[index];
+    int2 coord = int2(agent.position.x * 256, agent.position.y * 256);
+    
     float PI = 3.14159f;
     
+    //int2 FrontRightCoordinate = int2(agent.position.x * 256 + offset * cos(angle - PI / 4), agent.position.y * 256 + offset * sin(angle - PI / 4));
+    //int2 FrontLeftCoordinate = int2(agent.position.x * 256 + offset * cos(angle + PI / 4), agent.position.y * 256 + offset * sin(angle + PI / 4));
+    //int2 FrontCoordinate = int2(agent.position.x * 256 + offset * cos(angle), agent.position.y * 256 + offset * sin(angle));
+
     int2 FrontRightCoordinate = int2(coord.x + offset * cos(angle - PI / 4), coord.y + offset * sin(angle - PI / 4));
     int2 FrontLeftCoordinate = int2(coord.x + offset * cos(angle + PI / 4), coord.y + offset * sin(angle + PI / 4));
-    int2 FrontCoordinate = int2(coord.x + offset * cos(angle), coord.y + offset * sin(angle));
 
-    
-    if (id.x == coord.x && id.y == coord.y )
-    {
-        Result[id.xy] = float4(1, 1, 1, 1);
-    }
     if (id.x == FrontLeftCoordinate.x && id.y == FrontLeftCoordinate.y)
     {
         Result[id.xy] = float4(255, 0, 0, 255);
@@ -38,9 +54,10 @@ void CSMain (uint3 id : SV_DispatchThreadID)
     {
         Result[id.xy] = float4(0, 255, 0, 255);
     }
-    if (id.x == FrontCoordinate.x && id.y == FrontCoordinate.y)
-    {
-        Result[id.xy] = float4(0, 0, 255, 255);
-    }
-    
+    //if (id.x == FrontCoordinate.x && id.y == FrontCoordinate.y)
+    //{
+    //    Result[id.xy] = float4(0, 0, 255, 255);
+    //}
+    agents[index] = agent;
+    Result[coord] = float4(1, 1, 1, 1);
 }
