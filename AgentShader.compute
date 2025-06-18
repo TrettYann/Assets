@@ -43,16 +43,19 @@ void CSAgent(uint3 id : SV_DispatchThreadID)
     int ycoord = int(agent.position.y * height);
     coord = clamp(coord, int2(0, 0), int2(width - 1, height - 1));
     
+    // Sensor coords
+    
+    float2 front = float2(xcoord, ycoord) + SensorOffset * float2(cos(agent.angle), sin(agent.angle));
+    float2 frontL = float2(xcoord, ycoord) + SensorOffset * float2(cos(agent.angle + PI / 8.0), sin(agent.angle + PI / 8.0));
+    float2 frontR = float2(xcoord, ycoord) + SensorOffset * float2(cos(agent.angle - PI / 8.0), sin(agent.angle - PI / 8.0));
 
-    int2 FrontRightCoordinate = int2(xcoord + SensorOffset * cos(agent.angle - PI / 8), ycoord + SensorOffset * sin(agent.angle - PI / 8));
-    FrontRightCoordinate.x = (FrontRightCoordinate.x + width) % width; // Wrap around 
-    FrontRightCoordinate.y = (FrontRightCoordinate.y + height) % height;
-    int2 FrontLeftCoordinate = int2(xcoord + SensorOffset * cos(agent.angle + PI / 8), ycoord + SensorOffset * sin(agent.angle + PI / 8));
-    FrontLeftCoordinate.x = (FrontLeftCoordinate.x + width) % width;
-    FrontLeftCoordinate.y = (FrontLeftCoordinate.y + height) % height;
-    int2 FrontCoordinate = int2(xcoord + SensorOffset * cos(agent.angle), ycoord + SensorOffset * sin(agent.angle));
-    FrontCoordinate.x = (FrontCoordinate.x + width) % width;
-    FrontCoordinate.y = (FrontCoordinate.y + height) % height;
+    int2 FrontCoordinate = int2(round(front));
+    int2 FrontLeftCoordinate = int2(round(frontL));
+    int2 FrontRightCoordinate = int2(round(frontR));
+
+    FrontCoordinate = (FrontCoordinate + int2(width, height)) % int2(width, height);
+    FrontLeftCoordinate = (FrontLeftCoordinate + int2(width, height)) % int2(width, height);
+    FrontRightCoordinate = (FrontRightCoordinate + int2(width, height)) % int2(width, height);
     
     float FL = Sense(FrontLeftCoordinate);
     float FR = Sense(FrontRightCoordinate);
