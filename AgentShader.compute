@@ -46,16 +46,15 @@ void CSAgent(uint3 id : SV_DispatchThreadID)
 
     Agent agent = agents[index];
 
-    int2 coord = int2(agent.position * int2(width, height));
+    int2 coord = int2(round(agent.position * float2(width, height)));
 
-    int xcoord = int(agent.position.x * width);
-    int ycoord = int(agent.position.y * height);
+
     
 // Sense logic
     
-    float2 front = float2(xcoord,ycoord) + SensorOffset * float2(cos(agent.angle), sin(agent.angle));
-    float2 frontL = float2(xcoord,ycoord) + SensorOffset * float2(cos(agent.angle + PI / 8.0), sin(agent.angle + PI / 8.0));
-    float2 frontR = float2(xcoord,ycoord) + SensorOffset * float2(cos(agent.angle - PI / 8.0), sin(agent.angle - PI / 8.0));
+    float2 front = float2(coord) + SensorOffset * float2(cos(agent.angle), sin(agent.angle));
+    float2 frontL = float2(coord) + SensorOffset * float2(cos(agent.angle + PI / 8.0), sin(agent.angle + PI / 8.0));
+    float2 frontR = float2(coord) + SensorOffset * float2(cos(agent.angle - PI / 8.0), sin(agent.angle - PI / 8.0));
 
     // Round
     int2 FrontCoordinate = int2(round(front));
@@ -67,9 +66,9 @@ void CSAgent(uint3 id : SV_DispatchThreadID)
     FrontLeftCoordinate = (FrontLeftCoordinate + int2(width, height)) % int2(width, height);
     FrontRightCoordinate = (FrontRightCoordinate + int2(width, height)) % int2(width, height);
     
-    float FL = Sense(FrontLeftCoordinate);
-    float FR = Sense(FrontRightCoordinate);
-    float F = Sense(FrontCoordinate);
+    float FL = Source[FrontLeftCoordinate];
+    float FR = Source[FrontRightCoordinate];
+    float F = Source[FrontCoordinate];
     
     if (F > FL && F > FR)
     {
@@ -79,22 +78,25 @@ void CSAgent(uint3 id : SV_DispatchThreadID)
     {
         if (FR > FL)
         {
-            agent.angle -= rotationAngle * deltaTime;
+            agent.angle -= rotationAngle;
         }
         else
         {
-            agent.angle += rotationAngle * deltaTime;
+            agent.angle += rotationAngle;
         }
 
     }
     else if (FR < FL)
     {
-        agent.angle += rotationAngle * deltaTime;
+        agent.angle += rotationAngle;
     }
     else if (FR > FL)
     {
-        agent.angle -= rotationAngle * deltaTime;
+        agent.angle -= rotationAngle;
     }
+    agent.angle = fmod(agent.angle, 2.0 * PI);
+    if (agent.angle < 0)
+        agent.angle += 2.0 * PI;
     
     float2 dir = float2(cos(agent.angle), sin(agent.angle));
     float surgeFactor = isOscillatory ? (1.0 + agent.blockedSteps) : 1.0;
@@ -109,7 +111,8 @@ void CSAgent(uint3 id : SV_DispatchThreadID)
     nextCoord = (nextCoord + int2(width, height)) % int2(width, height);
     nextCoord = clamp(nextCoord, int2(0, 0), int2(width - 1, height - 1));
     
-    float4 occupied = OccupancyMap[nextCoord];
+    //float4 occupied = OccupancyMap[nextCoord];
+    float occupied = OccupancyMap[nextCoord];
     bool canMove = (occupied < 0.5);
     
     if (canMove)
@@ -134,7 +137,7 @@ void CSAgent(uint3 id : SV_DispatchThreadID)
             float angle = Hash(id.xy) * (2.0 * 3.14159265);
             agent.angle = angle;
             float2 rdir = float2(cos(agent.angle), sin(agent.angle));
-            float2 acoord = agent.position + rdir * deltaTime * speed;
+            int2 acoord = int2(round(agent.position + rdir * deltaTime * speed));
             Result[acoord] = float4(1, 1, 1, 1);
         }
         OccupancyMap[coord] = float4(1, 1, 1, 1);

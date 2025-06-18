@@ -16,20 +16,23 @@ public class Sim: MonoBehaviour
     private RenderTexture renderTexture;
     private RenderTexture tempRT;
     private RenderTexture occupancyTexture;
-    [Range(0, 10000000)] public int agentCount;
+    //[Range(0, 10000000)] public int agentCount;
     public int width = 256;
     public int height = 256;
     [Range(0f, 10f)] public float speed = 0.2f;
     [Range(-1f, 1f)] public float dampingFactor;
-    [Range(-100f, 100f)] public float rotationAngle;
+    [Range(-360f, 360f)] public float rotationAngle;
     [Range(1, 50)] public int SensorOffset;
     public int diffusionFrequency = 1;
     public bool isOscillatory;
+
+    [Range(1, 100)] public int population;
 
 
 
     ComputeBuffer computeBuffer;
     int agentKernel;
+    int agentCount;
     int diffuseKernel;
     private int frameCount = 0;
     int threadsPerGroup = 256;
@@ -38,7 +41,7 @@ public class Sim: MonoBehaviour
     // Start is called once before the first execution of Update after the MonoBehaviour is created
     void Start()
     {
-        
+        agentCount = (width * height*population)/100;
         groups = Mathf.CeilToInt(agentCount / (float)threadsPerGroup);
         renderTexture = createTexture();
         tempRT = createTexture();
@@ -65,9 +68,9 @@ public class Sim: MonoBehaviour
 
         handleShader();
         //tempRT = renderTexture; // Refresh TempRT
-        Graphics.Blit(renderTexture, dest);
+        Graphics.Blit(occupancyTexture, dest);
         frameCount++;
-
+        agentCount = (width * height * population) / 100;
     }
 
     RenderTexture createTexture()
@@ -89,7 +92,7 @@ public class Sim: MonoBehaviour
         agentShader.SetFloat("deltaTime", Time.deltaTime);
         agentShader.SetFloat("speed", speed);
         agentShader.SetInt("SensorOffset", SensorOffset);
-        agentShader.SetFloat("rotationAngle", rotationAngle);
+        agentShader.SetFloat("rotationAngle", rotationAngle * Mathf.Deg2Rad);
         agentShader.SetBuffer(agentKernel, "agents", computeBuffer);
         agentShader.SetBool("isOscillatory", isOscillatory);
         Graphics.SetRenderTarget(occupancyTexture);
@@ -121,11 +124,12 @@ public class Sim: MonoBehaviour
 
     void InitAgents()
     {
+        float radius = Mathf.Min(width, height) * 0.8f;
         Agent[] agents = new Agent[agentCount];
         for (int i = 0; i < agentCount; i++)
         {
-            agents[i].position = new Vector2(Random.value, Random.value); // 0-5f for circle, Random.value for random positions //[0,1]
             agents[i].angle = Random.Range(0f, Mathf.PI * 2f);
+            agents[i].position = new Vector2(Random.value, Random.value); //[0,1]
         }
         computeBuffer.SetData(agents);
     }

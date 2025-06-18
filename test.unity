@@ -153,16 +153,15 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   agentShader: {fileID: 7200000, guid: 3027edf0570fb2040b57ead0eedd180b, type: 3}
   diffuseShader: {fileID: 7200000, guid: 27dab39a515147b46bc9f3bb7cbd7f2f, type: 3}
-  renderTexture: {fileID: 0}
-  tempRT: {fileID: 0}
-  agentCount: 1
-  width: 64
-  height: 64
+  width: 256
+  height: 256
   speed: 0.01
-  dampingFactor: 0.02
-  rotationAngle: 56.2
-  SensorOffset: 8
-  diffusionFrequency: 10000
+  dampingFactor: 0.1
+  rotationAngle: 45
+  SensorOffset: 3
+  diffusionFrequency: 1
+  isOscillatory: 0
+  population: 30
 --- !u!81 &34278329
 AudioListener:
   m_ObjectHideFlags: 0
