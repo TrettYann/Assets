@@ -26,7 +26,7 @@ float Sense(int2 coord)
     return brightness;
 }
 
-[numthreads(256, 1, 1)]
+[numthreads(16, 16, 1)]
 void CSAgent(uint3 id : SV_DispatchThreadID)
 {
     
@@ -101,8 +101,7 @@ else if (agent.position.y > 1.0f)
 }
 
     agents[index] = agent;
-
-
+    
 
     // Set pixel
     Result[coord] = float4(1, 1, 1, 1);

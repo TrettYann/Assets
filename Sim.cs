@@ -14,7 +14,7 @@ public class Sim: MonoBehaviour
     public ComputeShader diffuseShader;
     public RenderTexture renderTexture;
     public RenderTexture tempRT;
-    [Range(0, 1000000)] public int agentCount;
+    [Range(0, 10000000)] public int agentCount;
     public int width = 256;
     public int height = 256;
     [Range(0f, 10f)] public float speed = 0.2f;
@@ -83,6 +83,10 @@ public class Sim: MonoBehaviour
         agentShader.SetBuffer(agentKernel, "agents", computeBuffer);
         agentShader.Dispatch(agentKernel, groups, 1, 1);
 
+        
+
+
+
         //Diffuse Shader
         if (frameCount % diffusionFrequency == 0)
         {
@@ -93,9 +97,9 @@ public class Sim: MonoBehaviour
             diffuseShader.Dispatch(diffuseKernel, width / 8, height / 8, 1);
 
             // Swap textures
-            var swap = renderTexture;
+            var swap2 = renderTexture;
             renderTexture = tempRT;
-            tempRT = swap;
+            tempRT = swap2;
         }
     }
 
@@ -106,7 +110,7 @@ public class Sim: MonoBehaviour
         Agent[] agents = new Agent[agentCount];
         for (int i = 0; i < agentCount; i++)
         {
-            agents[i].position = new Vector2(Random.value, Random.value); // new Vector2(0.5f,0.5f); //[0,1]
+            agents[i].position = new Vector2(Random.value, Random.value); // 0-5f for circle, Random.value for random positions //[0,1]
             agents[i].angle = Random.Range(0f, Mathf.PI * 2f);
         }
         computeBuffer.SetData(agents);
