@@ -1,0 +1,63 @@
+// Each #kernel tells which function to compile; you can have many kernels
+#pragma kernel CSMain
+
+// Create a RenderTexture with enableRandomWrite flag and set it
+// with cs.SetTexture
+
+struct Agent
+{
+    float2 position;
+    float angle;
+};
+
+
+RWStructuredBuffer<Agent> agents;
+RWTexture2D<float4> Result;
+Texture2D<float4> Source;
+float angle;
+int offset;
+
+float Sense(int2 coord)
+{
+    float brightness = Source.Load(int3(coord, 0));
+    return brightness;
+}
+
+[numthreads(8,8,1)]
+void CSMain (uint3 id : SV_DispatchThreadID)
+{
+    
+    Result[id.xy] = float4(0, 0, 0, 0);
+    
+    uint index = id.x;
+
+    if (index >= agents.Length)
+        return;
+
+    Agent agent = agents[index];
+    int2 coord = int2(agent.position.x * 256, agent.position.y * 256);
+    
+    float PI = 3.14159f;
+    
+    //int2 FrontRightCoordinate = int2(agent.position.x * 256 + offset * cos(angle - PI / 4), agent.position.y * 256 + offset * sin(angle - PI / 4));
+    //int2 FrontLeftCoordinate = int2(agent.position.x * 256 + offset * cos(angle + PI / 4), agent.position.y * 256 + offset * sin(angle + PI / 4));
+    //int2 FrontCoordinate = int2(agent.position.x * 256 + offset * cos(angle), agent.position.y * 256 + offset * sin(angle));
+
+    int2 FrontRightCoordinate = int2(coord.x + offset * cos(angle - PI / 4), coord.y + offset * sin(angle - PI / 4));
+    int2 FrontLeftCoordinate = int2(coord.x + offset * cos(angle + PI / 4), coord.y + offset * sin(angle + PI / 4));
+
+    if (id.x == FrontLeftCoordinate.x && id.y == FrontLeftCoordinate.y)
+    {
+        Result[id.xy] = float4(255, 0, 0, 255);
+    }
+    if (id.x == FrontRightCoordinate.x && id.y == FrontRightCoordinate.y)
+    {
+        Result[id.xy] = float4(0, 255, 0, 255);
+    }
+    //if (id.x == FrontCoordinate.x && id.y == FrontCoordinate.y)
+    //{
+    //    Result[id.xy] = float4(0, 0, 255, 255);
+    //}
+    agents[index] = agent;
+    Result[coord] = float4(1, 1, 1, 1);
+}

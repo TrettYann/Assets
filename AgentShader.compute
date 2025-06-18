@@ -1,0 +1,108 @@
+// Each #kernel tells which function to compile; you can have many kernels
+#pragma kernel CSAgent
+#define PI 3.14159265
+// Create a RenderTexture with enableRandomWrite flag and set it
+// with cs.SetTexture
+struct Agent
+{
+    float2 position;
+    float angle;
+};
+
+
+RWStructuredBuffer<Agent> agents;
+RWTexture2D<float4> Result;
+Texture2D<float4> Source;
+int width;
+int height;
+float deltaTime;
+float speed;
+int SensorOffset;
+float rotationAngle;
+
+float Sense(int2 coord)
+{
+    float brightness = Source.Load(int3(coord, 0));
+    return brightness;
+}
+
+[numthreads(16, 16, 1)]
+void CSAgent(uint3 id : SV_DispatchThreadID)
+{
+    
+    uint index = id.x;
+
+    if (index >= agents.Length)
+        return;
+
+    Agent agent = agents[index];
+
+    // Convert normalized pos to pixel coords
+    int2 coord = int2(agent.position.x * width, agent.position.y * height);
+    int xcoord = int(agent.position.x * width);
+    int ycoord = int(agent.position.y * height);
+    coord = clamp(coord, int2(0, 0), int2(width - 1, height - 1));
+    
+
+    int2 FrontRightCoordinate = int2(xcoord + SensorOffset * cos(agent.angle - PI / 8), ycoord + SensorOffset * sin(agent.angle - PI / 8));
+    int2 FrontLeftCoordinate = int2(xcoord + SensorOffset * cos(agent.angle + PI / 8), ycoord + SensorOffset * sin(agent.angle + PI / 8));
+    int2 FrontCoordinate = int2(xcoord + SensorOffset * cos(agent.angle), ycoord + SensorOffset * sin(agent.angle));
+    
+    float FL = Sense(FrontLeftCoordinate);
+    float FR = Sense(FrontRightCoordinate);
+    float F = Sense(FrontCoordinate);
+    if (F > FL && F > FR)
+    {
+        
+    }
+    else if (F < FL && F < FR)
+    {
+        if (FR > FL)
+        {
+            agent.angle -= rotationAngle*deltaTime;
+        }
+        else
+        {
+            agent.angle += rotationAngle * deltaTime;
+        }
+
+    }else if (FR < FL)
+    {
+        agent.angle += rotationAngle * deltaTime;
+    }
+    else if (FR > FL)
+    {
+        agent.angle -= rotationAngle * deltaTime;
+    }
+    
+    float2 dir = float2(cos(agent.angle), sin(agent.angle));
+
+    
+    // Apply motion with speed factor
+    agent.position += dir * deltaTime * speed;
+
+    // Bounce on edges
+if (agent.position.x < 0.0f)
+{
+    agent.position.x = 1.0f; // Move to the opposite side
+}
+else if (agent.position.x > 1.0f)
+{
+    agent.position.x = 0.0f; // Move to the opposite side
+}
+
+if (agent.position.y < 0.0f)
+{
+    agent.position.y = 1.0f; // Move to the opposite side
+}
+else if (agent.position.y > 1.0f)
+{
+    agent.position.y = 0.0f; // Move to the opposite side
+}
+
+    agents[index] = agent;
+    
+
+    // Set pixel
+    Result[coord] = float4(1, 1, 1, 1);
+}
