@@ -22,9 +22,7 @@ public class Sim: MonoBehaviour
     [Range(-100f, 100f)] public float rotationAngle;
     [Range(1, 50)] public int SensorOffset;
     public int diffusionFrequency = 1;
-    [Range(0f, 10f)] public float sensorAngleSpacing = 0.5f;
-    [Range(0f, 10f)] public float sensorDistance = 0.02f;
-    [Range(0f, 10f)] public float rotationSpeed = 1f;
+
 
 
     ComputeBuffer computeBuffer;
