@@ -8,12 +8,14 @@ public class Sim: MonoBehaviour
     {
         public Vector2 position;
         public float angle;
+        public int blockedSteps;
     }
 
     public ComputeShader agentShader;
     public ComputeShader diffuseShader;
-    public RenderTexture renderTexture;
-    public RenderTexture tempRT;
+    private RenderTexture renderTexture;
+    private RenderTexture tempRT;
+    private RenderTexture occupancyTexture;
     [Range(0, 10000000)] public int agentCount;
     public int width = 256;
     public int height = 256;
@@ -22,6 +24,7 @@ public class Sim: MonoBehaviour
     [Range(-100f, 100f)] public float rotationAngle;
     [Range(1, 50)] public int SensorOffset;
     public int diffusionFrequency = 1;
+    public bool isOscillatory;
 
 
 
@@ -39,6 +42,7 @@ public class Sim: MonoBehaviour
         groups = Mathf.CeilToInt(agentCount / (float)threadsPerGroup);
         renderTexture = createTexture();
         tempRT = createTexture();
+        occupancyTexture = createTexture();
         createBuffer();
         InitAgents();
         setupShader();
@@ -87,6 +91,10 @@ public class Sim: MonoBehaviour
         agentShader.SetInt("SensorOffset", SensorOffset);
         agentShader.SetFloat("rotationAngle", rotationAngle);
         agentShader.SetBuffer(agentKernel, "agents", computeBuffer);
+        agentShader.SetBool("isOscillatory", isOscillatory);
+        Graphics.SetRenderTarget(occupancyTexture);
+        GL.Clear(false, true, Color.clear);
+        agentShader.SetTexture(agentKernel, "OccupancyMap", occupancyTexture);
         agentShader.Dispatch(agentKernel, groups, 1, 1);
 
         
@@ -126,7 +134,7 @@ public class Sim: MonoBehaviour
 
     void createBuffer()
     {
-        computeBuffer = new ComputeBuffer(agentCount, sizeof(float) * 3);
+        computeBuffer = new ComputeBuffer(agentCount, sizeof(float) * 4);
         
     }
 
