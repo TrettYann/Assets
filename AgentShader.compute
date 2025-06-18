@@ -26,7 +26,7 @@ float Sense(int2 coord)
     return brightness;
 }
 
-[numthreads(16, 16, 1)]
+[numthreads(256, 1, 1)]
 void CSAgent(uint3 id : SV_DispatchThreadID)
 {
     
@@ -45,12 +45,19 @@ void CSAgent(uint3 id : SV_DispatchThreadID)
     
 
     int2 FrontRightCoordinate = int2(xcoord + SensorOffset * cos(agent.angle - PI / 8), ycoord + SensorOffset * sin(agent.angle - PI / 8));
+    FrontRightCoordinate.x = (FrontRightCoordinate.x + width) % width; // Wrap around 
+    FrontRightCoordinate.y = (FrontRightCoordinate.y + height) % height;
     int2 FrontLeftCoordinate = int2(xcoord + SensorOffset * cos(agent.angle + PI / 8), ycoord + SensorOffset * sin(agent.angle + PI / 8));
+    FrontLeftCoordinate.x = (FrontLeftCoordinate.x + width) % width;
+    FrontLeftCoordinate.y = (FrontLeftCoordinate.y + height) % height;
     int2 FrontCoordinate = int2(xcoord + SensorOffset * cos(agent.angle), ycoord + SensorOffset * sin(agent.angle));
+    FrontCoordinate.x = (FrontCoordinate.x + width) % width;
+    FrontCoordinate.y = (FrontCoordinate.y + height) % height;
     
     float FL = Sense(FrontLeftCoordinate);
     float FR = Sense(FrontRightCoordinate);
     float F = Sense(FrontCoordinate);
+    
     if (F > FL && F > FR)
     {
         
@@ -80,28 +87,12 @@ void CSAgent(uint3 id : SV_DispatchThreadID)
     
     // Apply motion with speed factor
     agent.position += dir * deltaTime * speed;
-
-    // Bounce on edges
-if (agent.position.x < 0.0f)
-{
-    agent.position.x = 1.0f; // Move to the opposite side
-}
-else if (agent.position.x > 1.0f)
-{
-    agent.position.x = 0.0f; // Move to the opposite side
-}
-
-if (agent.position.y < 0.0f)
-{
-    agent.position.y = 1.0f; // Move to the opposite side
-}
-else if (agent.position.y > 1.0f)
-{
-    agent.position.y = 0.0f; // Move to the opposite side
-}
+    
+    // Wrap around Edges
+    agent.position.x = fmod(agent.position.x + 1.0f, 1.0f);
+    agent.position.y = fmod(agent.position.y + 1.0f, 1.0f);
 
     agents[index] = agent;
-    
 
     // Set pixel
     Result[coord] = float4(1, 1, 1, 1);

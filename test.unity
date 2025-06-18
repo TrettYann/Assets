@@ -155,14 +155,14 @@ MonoBehaviour:
   diffuseShader: {fileID: 7200000, guid: 27dab39a515147b46bc9f3bb7cbd7f2f, type: 3}
   renderTexture: {fileID: 0}
   tempRT: {fileID: 0}
-  agentCount: 4246575
-  width: 1024
-  height: 1024
+  agentCount: 1
+  width: 64
+  height: 64
   speed: 0.01
   dampingFactor: 0.02
   rotationAngle: 56.2
-  SensorOffset: 33
-  diffusionFrequency: 1
+  SensorOffset: 8
+  diffusionFrequency: 10000
 --- !u!81 &34278329
 AudioListener:
   m_ObjectHideFlags: 0

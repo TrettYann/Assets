@@ -31,6 +31,7 @@ public class Sim: MonoBehaviour
     private int frameCount = 0;
     int threadsPerGroup = 256;
     int groups;
+
     // Start is called once before the first execution of Update after the MonoBehaviour is created
     void Start()
     {
@@ -41,7 +42,7 @@ public class Sim: MonoBehaviour
         createBuffer();
         InitAgents();
         setupShader();
-        Application.targetFrameRate = 140;
+        Application.targetFrameRate = 144;
     }
 
 
