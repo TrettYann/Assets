@@ -17,16 +17,19 @@ public class Sim: MonoBehaviour
     private RenderTexture tempRT;
     private RenderTexture occupancyTexture;
     //[Range(0, 10000000)] public int agentCount;
+    [Range(1, 100)] public int population;
     public int width = 256;
     public int height = 256;
     [Range(0f, 10f)] public float speed = 0.2f;
     [Range(-1f, 1f)] public float dampingFactor;
-    [Range(-360f, 360f)] public float rotationAngle;
+    [Range(0f, 360f)] public float rotationAngle;
+    [Range(0f, 360f)] public float sensoryAngle;
     [Range(1, 50)] public int SensorOffset;
     public int diffusionFrequency = 1;
     public bool isOscillatory;
+    public bool repellant;
 
-    [Range(1, 100)] public int population;
+    
 
 
 
@@ -60,17 +63,17 @@ public class Sim: MonoBehaviour
 
     private void OnRenderImage(RenderTexture src, RenderTexture dest)
     {
-        
+        frameCount++;
         if (renderTexture == null)
         {
             createTexture();
         }
-
+        agentCount = (width * height * population) / 100;
         handleShader();
         //tempRT = renderTexture; // Refresh TempRT
         Graphics.Blit(occupancyTexture, dest);
-        frameCount++;
-        agentCount = (width * height * population) / 100;
+        
+        
     }
 
     RenderTexture createTexture()
@@ -93,8 +96,10 @@ public class Sim: MonoBehaviour
         agentShader.SetFloat("speed", speed);
         agentShader.SetInt("SensorOffset", SensorOffset);
         agentShader.SetFloat("rotationAngle", rotationAngle * Mathf.Deg2Rad);
+        agentShader.SetFloat("sensoryAngle", sensoryAngle * Mathf.Deg2Rad);
         agentShader.SetBuffer(agentKernel, "agents", computeBuffer);
         agentShader.SetBool("isOscillatory", isOscillatory);
+        agentShader.SetBool("repellant", repellant);
         Graphics.SetRenderTarget(occupancyTexture);
         GL.Clear(false, true, Color.clear);
         agentShader.SetTexture(agentKernel, "OccupancyMap", occupancyTexture);

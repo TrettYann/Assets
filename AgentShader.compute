@@ -26,14 +26,10 @@ float deltaTime;
 float speed;
 int SensorOffset;
 float rotationAngle;
+float sensoryAngle;
 bool isOscillatory;
+bool repellant;
 float deltaAngle;
-
-float Sense(int2 coord)
-{
-    float brightness = Source.Load(int3(coord, 0));
-    return brightness;
-}
 
 [numthreads(256, 1, 1)]
 void CSAgent(uint3 id : SV_DispatchThreadID)
@@ -53,8 +49,8 @@ void CSAgent(uint3 id : SV_DispatchThreadID)
 // Sense logic
     
     float2 front = float2(coord) + SensorOffset * float2(cos(agent.angle), sin(agent.angle));
-    float2 frontL = float2(coord) + SensorOffset * float2(cos(agent.angle + PI / 8.0), sin(agent.angle + PI / 8.0));
-    float2 frontR = float2(coord) + SensorOffset * float2(cos(agent.angle - PI / 8.0), sin(agent.angle - PI / 8.0));
+    float2 frontL = float2(coord) + SensorOffset * float2(cos(agent.angle + sensoryAngle), sin(agent.angle + sensoryAngle));
+    float2 frontR = float2(coord) + SensorOffset * float2(cos(agent.angle - sensoryAngle), sin(agent.angle - sensoryAngle));
 
     // Round
     int2 FrontCoordinate = int2(round(front));
@@ -112,7 +108,7 @@ void CSAgent(uint3 id : SV_DispatchThreadID)
     nextCoord = clamp(nextCoord, int2(0, 0), int2(width - 1, height - 1));
     
     //float4 occupied = OccupancyMap[nextCoord];
-    float occupied = OccupancyMap[nextCoord];
+    float occupied = OccupancyMap[nextCoord].r;
     bool canMove = (occupied < 0.5);
     
     if (canMove)
@@ -140,15 +136,32 @@ void CSAgent(uint3 id : SV_DispatchThreadID)
             int2 acoord = int2(round(agent.position + rdir * deltaTime * speed));
             Result[acoord] = float4(1, 1, 1, 1);
         }
-        OccupancyMap[coord] = float4(1, 1, 1, 1);
+        OccupancyMap[coord] = float4(1, 0, 0, 1);
+    }
+
+    if (repellant)
+    {
+        int2 center = int2(width / 2, height / 2);
+        int radius = 30;
+
+        for (int y = -radius; y <= radius; y++)
+        {
+            for (int x = -radius; x <= radius; x++)
+            {
+                int2 pos = center + int2(x, y);
+                if (length(float2(x, y)) <= radius)
+                {
+                    pos = (pos + int2(width, height)) % int2(width, height);
+                    Result[pos] = float4(-1, -1, -1, 1);
+                }
+            }
+        }
     }
 
     
 
-    
 
-
-    agents[index] = agent;
+        agents[index] = agent;
     
     
 }

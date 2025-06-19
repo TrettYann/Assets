@@ -4,7 +4,7 @@
 // Create a RenderTexture with enableRandomWrite flag and set it
 // with cs.SetTexture
 RWTexture2D<float4> Result;
-RWTexture2D<float4> Source;
+Texture2D<float4> Source;
 float damping;
 int width;
 int height;
@@ -19,7 +19,7 @@ void CSDiffuse(uint3 id : SV_DispatchThreadID)
     if (coord.x >= width || coord.y >= height)
         return;
     
-    float sum = 0.0;
+    float4 sum = float4(0,0,0,0);
     int count = 0;
     
     for (int y = -1; y <= 1; y++)
@@ -28,16 +28,14 @@ void CSDiffuse(uint3 id : SV_DispatchThreadID)
         {
             // Wraping
             int2 neighbor = (coord + int2(x, y) + int2(width, height)) % int2(width, height);
-            if (neighbor.x >= 0 && neighbor.y >= 0 && neighbor.x < width && neighbor.y < height)
-            {
-                sum += Source[neighbor];
-                count++;
-            }
+            sum += Source[neighbor];
+            count++;
+           
         }
     }
     
-    float mean = sum / count;
-    float damped = mean * (1.0 - damping);
+    float4 mean = sum / count;
+    float4 damped = mean * (1.0 - damping);
     
-    Result[coord] = float4(damped, damped, damped, 1.0);
+    Result[coord] = float4(damped.rgb, 1);
 }

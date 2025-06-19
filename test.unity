@@ -158,10 +158,10 @@ MonoBehaviour:
   speed: 0.01
   dampingFactor: 0.1
   rotationAngle: 45
-  SensorOffset: 3
+  SensorOffset: 9
   diffusionFrequency: 1
   isOscillatory: 0
-  population: 30
+  population: 46
 --- !u!81 &34278329
 AudioListener:
   m_ObjectHideFlags: 0
