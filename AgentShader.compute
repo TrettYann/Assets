@@ -8,6 +8,7 @@ struct Agent
     float2 position;
     float angle;
     int blockedSteps;
+    int shrinkParticle;
 };
 
 // PRNG
@@ -20,8 +21,8 @@ RWStructuredBuffer<Agent> agents;
 RWTexture2D<float4> Result;
 Texture2D<float4> Source;
 RWTexture2D<float4> OccupancyMap;
-int width;
-int height;
+uint width;
+uint height;
 int cursorX;
 int cursorY;
 float deltaTime;
@@ -61,13 +62,13 @@ void CSAgent(uint3 id : SV_DispatchThreadID)
     int2 FrontRightCoordinate = int2(round(frontR));
 
     // Wrap
-    FrontCoordinate = (FrontCoordinate + int2(width, height)) % int2(width, height);
-    FrontLeftCoordinate = (FrontLeftCoordinate + int2(width, height)) % int2(width, height);
-    FrontRightCoordinate = (FrontRightCoordinate + int2(width, height)) % int2(width, height);
+    FrontCoordinate = (FrontCoordinate + uint2(width, height)) % uint2(width, height);
+    FrontLeftCoordinate = (FrontLeftCoordinate + uint2(width, height)) % uint2(width, height);
+    FrontRightCoordinate = (FrontRightCoordinate + uint2(width, height)) % uint2(width, height);
     
-    float FL = Source[FrontLeftCoordinate];
-    float FR = Source[FrontRightCoordinate];
-    float F = Source[FrontCoordinate];
+    float FL = Source[FrontLeftCoordinate].r;
+    float FR = Source[FrontRightCoordinate].r;
+    float F = Source[FrontCoordinate].r;
     
     if (F > FL && F > FR)
     {
@@ -107,8 +108,8 @@ void CSAgent(uint3 id : SV_DispatchThreadID)
     // Convert calculated pos to rounded pixel coords
     int2 nextCoord = int2(round(next * float2(width, height)));
     // Wrap
-    nextCoord = (nextCoord + int2(width, height)) % int2(width, height);
-    nextCoord = clamp(nextCoord, int2(0, 0), int2(width - 1, height - 1));
+    nextCoord = (nextCoord + uint2(width, height)) % uint2(width, height);
+    nextCoord = clamp(nextCoord, uint2(0, 0), uint2(width - 1, height - 1));
     
     //float4 occupied = OccupancyMap[nextCoord];
     float occupied = OccupancyMap[nextCoord].r;
@@ -141,7 +142,31 @@ void CSAgent(uint3 id : SV_DispatchThreadID)
         }
         OccupancyMap[coord] = float4(1, 1, 1, 1);
     }
+    
+    // Agent window
+    int radius = 9; // default
+    int sradius = 5;
+    float sum = 0;
+    for (int y = -radius; y <= radius; y++)
+    {
+        for (int x = -radius; x <= radius; x++)
+        {
+            float dist = length(float2(x, y));
+            int2 pos = coord + int2(x, y);
+            if (dist <= radius)
+            {
+                pos = (pos + uint2(width, height)) % uint2(width, height);
+                sum += OccupancyMap[pos].r;
 
+
+            }
+        }
+    }
+    if (sum > 24) // default
+    {
+        agent.shrinkParticle = 1;
+        OccupancyMap[coord] = float4(0, 0, 0, 0);
+    }
     if (index == 1)
     {
         if (repellant)
@@ -167,7 +192,7 @@ void CSAgent(uint3 id : SV_DispatchThreadID)
         }
         if (drawNutrientPoints)
         {
-            int2 pos1 = int2(width / 2, height / 2);
+            uint2 pos1 = uint2(width / 2, height / 2);
             int radius = 50;
 
             for (int y = -radius; y <= radius; y++)
@@ -179,7 +204,7 @@ void CSAgent(uint3 id : SV_DispatchThreadID)
                     if (dist <= radius)
                     {
                         float fade = 1 - (dist / radius);
-                        pos = (pos + int2(width, height)) % int2(width, height);
+                        pos = (pos + uint2(width, height)) % uint2(width, height);
                         Result[pos] = float4(fade, fade, fade, fade);
                     }
                 }

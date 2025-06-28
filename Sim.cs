@@ -1,5 +1,7 @@
 using UnityEngine;
 using UnityEngine.Apple;
+using System.Collections.Generic;
+
 
 public class Sim: MonoBehaviour
 {
@@ -9,6 +11,7 @@ public class Sim: MonoBehaviour
         public Vector2 position;
         public float angle;
         public int blockedSteps;
+        public int shrinkParticle;
     }
 
     public ComputeShader agentShader;
@@ -27,6 +30,7 @@ public class Sim: MonoBehaviour
     [Range(1, 50)] public int SensorOffset;
     //[Range(1, 8)] public int nutrientPoints;
     public int diffusionFrequency = 1;
+    public int filterFrequency = 3;
     public bool renderDiffusion;
     public bool isOscillatory;
     public bool repellant;
@@ -77,6 +81,7 @@ public class Sim: MonoBehaviour
                 Vector2 coord = new Vector2(Mathf.Round(mousePos.x), Mathf.Round(mousePos.y));
                 cursor = coord;
         }
+        Debug.Log($"{agentCount}");
     }
 
     private void OnRenderImage(RenderTexture src, RenderTexture dest)
@@ -86,7 +91,7 @@ public class Sim: MonoBehaviour
         {
             createTexture();
         }
-        agentCount = (width * height * population) / 100;
+        //agentCount = (width * height * population) / 100;
         handleShader();
         //tempRT = renderTexture; // Refresh TempRT
         if (renderDiffusion)
@@ -152,11 +157,30 @@ public class Sim: MonoBehaviour
             renderTexture = tempRT;
             tempRT = swap2;
         }
+        if (frameCount % filterFrequency == 0)
+        {
+            FilterAgents();
+        }
+    }
+
+    void FilterAgents()
+    {
+        Agent[] agents = new Agent[computeBuffer.count];
+        computeBuffer.GetData(agents);
+        List<Agent> agentList = new List<Agent>(agents);
+        agentList.RemoveAll(agent => agent.shrinkParticle == 1);
+        if (agentList.Count != computeBuffer.count)
+        {
+            agentCount = agentList.Count;
+            computeBuffer.Release();
+            computeBuffer = new ComputeBuffer(agentCount, sizeof(float) * 5);
+            computeBuffer.SetData(agentList.ToArray());
+
+        }
     }
 
 
-
-    void InitAgents()
+        void InitAgents()
     {
         float radius = Mathf.Min(width, height) * 0.8f;
         Agent[] agents = new Agent[agentCount];
@@ -164,6 +188,7 @@ public class Sim: MonoBehaviour
         {
             agents[i].angle = Random.Range(0f, Mathf.PI * 2f);
             agents[i].position = new Vector2(Random.value, Random.value); //[0,1]
+            agents[i].shrinkParticle = 0;
         }
         computeBuffer.SetData(agents);
     }
@@ -172,7 +197,7 @@ public class Sim: MonoBehaviour
 
     void createBuffer()
     {
-        computeBuffer = new ComputeBuffer(agentCount, sizeof(float) * 4);
+        computeBuffer = new ComputeBuffer(agentCount, sizeof(float) * 5);
         
     }
 

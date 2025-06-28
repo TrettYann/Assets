@@ -19,7 +19,7 @@ void CSDiffuse(uint3 id : SV_DispatchThreadID)
     if (coord.x >= width || coord.y >= height)
         return;
     
-    float4 sum = float4(0,0,0,0);
+    float sum = 0;
     int count = 0;
     
     for (int y = -1; y <= 1; y++)
@@ -28,7 +28,7 @@ void CSDiffuse(uint3 id : SV_DispatchThreadID)
         {
             // Wraping
             int2 neighbor = (coord + int2(x, y) + int2(width, height)) % int2(width, height);
-            sum += Source[neighbor];
+            sum += Source[neighbor].r;
             count++;
            
         }
