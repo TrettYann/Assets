@@ -25,9 +25,12 @@ public class Sim: MonoBehaviour
     [Range(0f, 360f)] public float rotationAngle;
     [Range(0f, 360f)] public float sensoryAngle;
     [Range(1, 50)] public int SensorOffset;
+    //[Range(1, 8)] public int nutrientPoints;
     public int diffusionFrequency = 1;
+    public bool renderDiffusion;
     public bool isOscillatory;
     public bool repellant;
+    public bool drawNutrientPoints;
 
     
 
@@ -40,6 +43,8 @@ public class Sim: MonoBehaviour
     private int frameCount = 0;
     int threadsPerGroup = 256;
     int groups;
+    Vector2 cursor;
+    RenderTexture rm;
 
     // Start is called once before the first execution of Update after the MonoBehaviour is created
     void Start()
@@ -59,6 +64,19 @@ public class Sim: MonoBehaviour
     // Update is called once per frame
     void Update()
     {
+        if (drawNutrientPoints) {
+            if (Input.GetMouseButtonDown(0))
+            {
+                Vector3 mousePos = Input.mousePosition;
+                Vector2 coord = new Vector2(Mathf.Round(mousePos.x), Mathf.Round(mousePos.y));
+            }
+        }
+        if (repellant)
+        {
+                Vector3 mousePos = Input.mousePosition;
+                Vector2 coord = new Vector2(Mathf.Round(mousePos.x), Mathf.Round(mousePos.y));
+                cursor = coord;
+        }
     }
 
     private void OnRenderImage(RenderTexture src, RenderTexture dest)
@@ -71,7 +89,15 @@ public class Sim: MonoBehaviour
         agentCount = (width * height * population) / 100;
         handleShader();
         //tempRT = renderTexture; // Refresh TempRT
-        Graphics.Blit(occupancyTexture, dest);
+        if (renderDiffusion)
+        {
+            rm = renderTexture;
+        }
+        else
+        {
+            rm = occupancyTexture;
+        }
+        Graphics.Blit(rm, dest);
         
         
     }
@@ -95,11 +121,14 @@ public class Sim: MonoBehaviour
         agentShader.SetFloat("deltaTime", Time.deltaTime);
         agentShader.SetFloat("speed", speed);
         agentShader.SetInt("SensorOffset", SensorOffset);
+        agentShader.SetInt("cursorX", (int)cursor.x);
+        agentShader.SetInt("cursorY", (int)cursor.y);
         agentShader.SetFloat("rotationAngle", rotationAngle * Mathf.Deg2Rad);
         agentShader.SetFloat("sensoryAngle", sensoryAngle * Mathf.Deg2Rad);
         agentShader.SetBuffer(agentKernel, "agents", computeBuffer);
         agentShader.SetBool("isOscillatory", isOscillatory);
         agentShader.SetBool("repellant", repellant);
+        agentShader.SetBool("drawNutrientPoints", drawNutrientPoints);
         Graphics.SetRenderTarget(occupancyTexture);
         GL.Clear(false, true, Color.clear);
         agentShader.SetTexture(agentKernel, "OccupancyMap", occupancyTexture);

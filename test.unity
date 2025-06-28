@@ -153,15 +153,18 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   agentShader: {fileID: 7200000, guid: 3027edf0570fb2040b57ead0eedd180b, type: 3}
   diffuseShader: {fileID: 7200000, guid: 27dab39a515147b46bc9f3bb7cbd7f2f, type: 3}
+  population: 10
   width: 256
   height: 256
-  speed: 0.01
+  speed: 0.1
   dampingFactor: 0.1
   rotationAngle: 45
+  sensoryAngle: 22.5
   SensorOffset: 9
   diffusionFrequency: 1
-  isOscillatory: 0
-  population: 46
+  isOscillatory: 1
+  repellant: 0
+  drawNutrientPoints: 1
 --- !u!81 &34278329
 AudioListener:
   m_ObjectHideFlags: 0

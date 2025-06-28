@@ -22,6 +22,8 @@ Texture2D<float4> Source;
 RWTexture2D<float4> OccupancyMap;
 int width;
 int height;
+int cursorX;
+int cursorY;
 float deltaTime;
 float speed;
 int SensorOffset;
@@ -29,6 +31,7 @@ float rotationAngle;
 float sensoryAngle;
 bool isOscillatory;
 bool repellant;
+bool drawNutrientPoints;
 float deltaAngle;
 
 [numthreads(256, 1, 1)]
@@ -136,32 +139,57 @@ void CSAgent(uint3 id : SV_DispatchThreadID)
             int2 acoord = int2(round(agent.position + rdir * deltaTime * speed));
             Result[acoord] = float4(1, 1, 1, 1);
         }
-        OccupancyMap[coord] = float4(1, 0, 0, 1);
+        OccupancyMap[coord] = float4(1, 1, 1, 1);
     }
 
-    if (repellant)
+    if (index == 1)
     {
-        int2 center = int2(width / 2, height / 2);
-        int radius = 30;
-
-        for (int y = -radius; y <= radius; y++)
+        if (repellant)
         {
-            for (int x = -radius; x <= radius; x++)
+            int2 mousePos = int2(cursorX, cursorY);
+
+
+            int radius = 30;
+            for (int y = -radius; y <= radius; y++)
             {
-                int2 pos = center + int2(x, y);
-                if (length(float2(x, y)) <= radius)
+                for (int x = -radius; x <= radius; x++)
                 {
-                    pos = (pos + int2(width, height)) % int2(width, height);
-                    Result[pos] = float4(-1, -1, -1, 1);
+                    float dist = length(float2(x, y));
+                    int2 pos = mousePos + int2(x, y);
+                    if (dist <= radius)
+                    {
+                        float fade = 1 - (dist / radius);
+                        //pos = (pos + int2(width, height)) % int2(width, height);
+                        Result[pos] = float4(-fade, -fade, -fade, 1);
+                    }
                 }
             }
         }
+        if (drawNutrientPoints)
+        {
+            int2 pos1 = int2(width / 2, height / 2);
+            int radius = 50;
+
+            for (int y = -radius; y <= radius; y++)
+            {
+                for (int x = -radius; x <= radius; x++)
+                {
+                    float dist = length(float2(x, y));
+                    int2 pos = pos1 + int2(x, y);
+                    if (dist <= radius)
+                    {
+                        float fade = 1 - (dist / radius);
+                        pos = (pos + int2(width, height)) % int2(width, height);
+                        Result[pos] = float4(fade, fade, fade, fade);
+                    }
+                }
+            }
+        }
+
     }
 
-    
 
-
-        agents[index] = agent;
+     agents[index] = agent;
     
     
 }
