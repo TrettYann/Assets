@@ -34,8 +34,8 @@ void CSDiffuse(uint3 id : SV_DispatchThreadID)
         }
     }
     
-    float4 mean = sum / count;
-    float4 damped = mean * (1.0 - damping);
+    float mean = sum / count;
+    float damped = mean * (1.0 - damping);
     
-    Result[coord] = float4(damped.rgb, 1);
+    Result[coord] = float4(damped, damped, damped, 1);
 }

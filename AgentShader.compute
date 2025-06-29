@@ -9,12 +9,16 @@ struct Agent
     float angle;
     int blockedSteps;
     int shrinkParticle;
+    int devideParticle;
 };
 
 // PRNG
 float Hash(float2 p)
 {
     return frac(sin(dot(p, float2(12.9898, 78.233))) * 43758.5453);
+}
+int cf(float f){
+    return f < 0.5 ? 0 : 1;
 }
 
 RWStructuredBuffer<Agent> agents;
@@ -35,6 +39,7 @@ bool repellant;
 bool drawNutrientPoints;
 float deltaAngle;
 
+
 [numthreads(256, 1, 1)]
 void CSAgent(uint3 id : SV_DispatchThreadID)
 {
@@ -48,6 +53,7 @@ void CSAgent(uint3 id : SV_DispatchThreadID)
 
     int2 coord = int2(round(agent.position * float2(width, height)));
 
+    
 
     
 // Sense logic
@@ -147,6 +153,7 @@ void CSAgent(uint3 id : SV_DispatchThreadID)
     int radius = 9; // default
     int sradius = 5;
     float sum = 0;
+    float sum2 = 0;
     for (int y = -radius; y <= radius; y++)
     {
         for (int x = -radius; x <= radius; x++)
@@ -158,14 +165,20 @@ void CSAgent(uint3 id : SV_DispatchThreadID)
                 pos = (pos + uint2(width, height)) % uint2(width, height);
                 sum += OccupancyMap[pos].r;
 
-
+                if (sradius >= dist)
+                {
+                    sum2 += OccupancyMap[pos].r;
+                }
             }
         }
+    }
+    if (sum2 > 0 && sum2 < 10 && cf(Hash(id.xy)) == 0);
+    {
+        agent.devideParticle = 1;
     }
     if (sum > 24) // default
     {
         agent.shrinkParticle = 1;
-        OccupancyMap[coord] = float4(0, 0, 0, 0);
     }
     if (index == 1)
     {

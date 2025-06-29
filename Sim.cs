@@ -12,6 +12,7 @@ public class Sim: MonoBehaviour
         public float angle;
         public int blockedSteps;
         public int shrinkParticle;
+        public int devideParticle;
     }
 
     public ComputeShader agentShader;
@@ -167,17 +168,41 @@ public class Sim: MonoBehaviour
     {
         Agent[] agents = new Agent[computeBuffer.count];
         computeBuffer.GetData(agents);
-        List<Agent> agentList = new List<Agent>(agents);
-        agentList.RemoveAll(agent => agent.shrinkParticle == 1);
-        if (agentList.Count != computeBuffer.count)
+        List<Agent> shrinkList = new List<Agent>(agents);
+        shrinkList.RemoveAll(agent => agent.shrinkParticle == 1);
+        if (shrinkList.Count != computeBuffer.count)
         {
-            agentCount = agentList.Count;
+            agentCount = shrinkList.Count;
             computeBuffer.Release();
-            computeBuffer = new ComputeBuffer(agentCount, sizeof(float) * 5);
-            computeBuffer.SetData(agentList.ToArray());
+            computeBuffer = new ComputeBuffer(agentCount, sizeof(float) * 3 + sizeof(int) * 3);
+            computeBuffer.SetData(shrinkList.ToArray());
+
+            agents = new Agent[computeBuffer.count];
+            computeBuffer.GetData(agents);
 
         }
-    }
+        List<Agent> devideList = new List<Agent>(agents);
+        devideList.RemoveAll(agent => agent.devideParticle == 0);
+        if (devideList.Count > 0)
+        {
+            Debug.Log($"Added{devideList.Count}");
+
+            List<Agent> newAgents = new List<Agent>();
+            foreach (var agent in devideList)
+            {
+                Agent copy = agent;
+                newAgents.Add(copy);
+            }
+            newAgents.AddRange(shrinkList); 
+            newAgents.AddRange(devideList);
+
+            agentCount = newAgents.Count;
+            computeBuffer.Release();
+            computeBuffer = new ComputeBuffer(agentCount, sizeof(float) * 3 + sizeof(int) * 3);
+            computeBuffer.SetData(newAgents.ToArray());
+            
+        }
+        }
 
 
         void InitAgents()
@@ -197,7 +222,7 @@ public class Sim: MonoBehaviour
 
     void createBuffer()
     {
-        computeBuffer = new ComputeBuffer(agentCount, sizeof(float) * 5);
+        computeBuffer = new ComputeBuffer(agentCount, sizeof(float) * 3 + sizeof(int) * 3);
         
     }
 
