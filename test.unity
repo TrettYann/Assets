@@ -159,12 +159,18 @@ MonoBehaviour:
   speed: 0.1
   dampingFactor: 0.1
   rotationAngle: 45
-  sensoryAngle: 22.5
+  sensoryAngle: 45
+  starvingSpeed: 0.001
   SensorOffset: 9
   diffusionFrequency: 1
-  isOscillatory: 1
+  filterFrequency: 3
+  numNutrientPoints: 2
+  renderDiffusion: 1
+  isOscillatory: 0
   repellant: 0
   drawNutrientPoints: 1
+  starving: 0
+  wrap: 0
 --- !u!81 &34278329
 AudioListener:
   m_ObjectHideFlags: 0

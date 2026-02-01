@@ -10,6 +10,7 @@ public class Sim: MonoBehaviour
     {
         public Vector2 position;
         public float angle;
+        public float energy;
         public int blockedSteps;
         public int shrinkParticle;
         public int devideParticle;
@@ -28,14 +29,18 @@ public class Sim: MonoBehaviour
     [Range(-1f, 1f)] public float dampingFactor;
     [Range(0f, 360f)] public float rotationAngle;
     [Range(0f, 360f)] public float sensoryAngle;
+    public float starvingSpeed = 0.001f;
     [Range(1, 50)] public int SensorOffset;
     //[Range(1, 8)] public int nutrientPoints;
     public int diffusionFrequency = 1;
     public int filterFrequency = 3;
+    public int numNutrientPoints = 0;
     public bool renderDiffusion;
     public bool isOscillatory;
     public bool repellant;
     public bool drawNutrientPoints;
+    public bool starving;
+    public bool wrap;
 
     
 
@@ -126,7 +131,9 @@ public class Sim: MonoBehaviour
         agentShader.SetTexture(agentKernel, "Source", tempRT);
         agentShader.SetFloat("deltaTime", Time.deltaTime);
         agentShader.SetFloat("speed", speed);
+        agentShader.SetFloat("starvingSpeed", starvingSpeed);
         agentShader.SetInt("SensorOffset", SensorOffset);
+        agentShader.SetInt("numNutrientPoints", numNutrientPoints);
         agentShader.SetInt("cursorX", (int)cursor.x);
         agentShader.SetInt("cursorY", (int)cursor.y);
         agentShader.SetFloat("rotationAngle", rotationAngle * Mathf.Deg2Rad);
@@ -135,6 +142,9 @@ public class Sim: MonoBehaviour
         agentShader.SetBool("isOscillatory", isOscillatory);
         agentShader.SetBool("repellant", repellant);
         agentShader.SetBool("drawNutrientPoints", drawNutrientPoints);
+        agentShader.SetBool("starving", starving);
+        agentShader.SetBool("wrap", wrap);
+        diffuseShader.SetBool("wrap", wrap);
         Graphics.SetRenderTarget(occupancyTexture);
         GL.Clear(false, true, Color.clear);
         agentShader.SetTexture(agentKernel, "OccupancyMap", occupancyTexture);
@@ -163,18 +173,19 @@ public class Sim: MonoBehaviour
             FilterAgents();
         }
     }
-
+    
     void FilterAgents()
     {
         Agent[] agents = new Agent[computeBuffer.count];
         computeBuffer.GetData(agents);
+        Debug.Log($"Energy: {agents[0].energy}");
         List<Agent> shrinkList = new List<Agent>(agents);
         shrinkList.RemoveAll(agent => agent.shrinkParticle == 1);
         if (shrinkList.Count != computeBuffer.count)
         {
             agentCount = shrinkList.Count;
             computeBuffer.Release();
-            computeBuffer = new ComputeBuffer(agentCount, sizeof(float) * 3 + sizeof(int) * 3);
+            computeBuffer = new ComputeBuffer(agentCount, sizeof(float) * 4 + sizeof(int) * 3);
             computeBuffer.SetData(shrinkList.ToArray());
 
             agents = new Agent[computeBuffer.count];
@@ -198,7 +209,7 @@ public class Sim: MonoBehaviour
 
             agentCount = newAgents.Count;
             computeBuffer.Release();
-            computeBuffer = new ComputeBuffer(agentCount, sizeof(float) * 3 + sizeof(int) * 3);
+            computeBuffer = new ComputeBuffer(agentCount, sizeof(float) * 4 + sizeof(int) * 3);
             computeBuffer.SetData(newAgents.ToArray());
             
         }
@@ -212,8 +223,10 @@ public class Sim: MonoBehaviour
         for (int i = 0; i < agentCount; i++)
         {
             agents[i].angle = Random.Range(0f, Mathf.PI * 2f);
-            agents[i].position = new Vector2(Random.value, Random.value); //[0,1]
+            agents[i].position = new Vector2(Random.value, Random.value);
+            //agents[i].position = new Vector2(0.5f, 0.5f); 
             agents[i].shrinkParticle = 0;
+            agents[i].energy = 1;
         }
         computeBuffer.SetData(agents);
     }
@@ -222,7 +235,7 @@ public class Sim: MonoBehaviour
 
     void createBuffer()
     {
-        computeBuffer = new ComputeBuffer(agentCount, sizeof(float) * 3 + sizeof(int) * 3);
+        computeBuffer = new ComputeBuffer(agentCount, sizeof(float) * 4 + sizeof(int) * 3);
         
     }
 

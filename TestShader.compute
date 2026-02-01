@@ -43,4 +43,12 @@ void CSMain(uint3 id : SV_DispatchThreadID)
         Result[id.xy] = float4(0, 0, 255, 255);
     }
     
+    if ((id.x == 0 && id.y == 0) || 
+    (id.x == 256 - 1 && id.y == 0) || 
+    (id.x == 0 && id.y == 256 - 1) ||
+    (id.x == 256 - 1 && id.y == 256 - 1))           
+    {
+        Result[id.xy] = float4(1, 1, 1, 1);
+    }
+    
 }

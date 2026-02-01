@@ -8,6 +8,7 @@ Texture2D<float4> Source;
 float damping;
 int width;
 int height;
+bool wrap;
 
 
 
@@ -26,8 +27,17 @@ void CSDiffuse(uint3 id : SV_DispatchThreadID)
     {
         for (int x = -1; x <= 1; x++)
         {
+            int2 neighbor;
             // Wraping
-            int2 neighbor = (coord + int2(x, y) + int2(width, height)) % int2(width, height);
+            if (wrap)
+            {
+                neighbor = (coord + int2(x, y) + int2(width, height)) % int2(width, height);
+            }
+            else
+            {
+                neighbor = (coord + int2(x, y));
+
+            }
             sum += Source[neighbor].r;
             count++;
            
